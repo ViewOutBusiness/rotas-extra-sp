@@ -29,7 +29,9 @@ button.on{background:var(--ink);color:var(--papel);border-color:var(--ink)}
 button.dia.on{background:var(--c);border-color:var(--c);color:#fff}
 button.zn.on{background:var(--c);border-color:var(--c);color:#fff}
 .sep{width:1px;height:22px;background:var(--linha);margin:0 4px}
-.mapabox{position:relative;border:1px solid var(--linha-forte);border-radius:12px;overflow:hidden;background:var(--papel)}
+.mapabox{position:relative;border:1px solid var(--linha-forte);border-radius:12px;background:var(--papel)}
+.mapa{border-radius:12px;overflow:hidden}
+.leaflet-tooltip-pane{overflow:visible}
 .mapa{width:100%;background:var(--papel)}
 .lupa{position:absolute;right:10px;top:10px;z-index:500;display:flex;flex-direction:column;gap:5px}
 .lupa button{width:34px;height:34px;padding:0;font-size:16px;font-weight:700;line-height:1;box-shadow:0 1px 4px rgba(15,24,40,.18)}
@@ -70,7 +72,8 @@ ul.prem li{margin:6px 0}ul.prem b{color:var(--ink)}
 code{font-size:12.5px;background:rgba(125,135,152,.15);padding:1px 5px;border-radius:4px}
 footer{margin-top:44px;padding-top:14px;border-top:1px solid var(--linha);font-size:12px;color:var(--ink-3)}
 .leaflet-tooltip.tt{background:var(--papel);color:var(--ink);border:1px solid var(--linha-forte);border-radius:10px;
-box-shadow:0 8px 26px rgba(15,24,40,.2);padding:9px 11px;font-size:12.5px;line-height:1.4;white-space:normal;max-width:290px}
+box-shadow:0 8px 26px rgba(15,24,40,.2);padding:9px 11px;font-size:12.5px;line-height:1.4;
+white-space:normal;width:max-content;max-width:min(300px,72vw)}
 .leaflet-tooltip.tt:before{display:none}
 .tt .lj{font-weight:800;letter-spacing:-.01em}
 .tt .cd{color:var(--ink-2);font-size:11.5px;margin-top:2px}
@@ -297,14 +300,12 @@ const TILE = escuro
 const ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 const mapas = {};
+window.mapas = mapas; // exposto pra inspeção/depuração no console
 function criaMapa(id) {
   const el = document.getElementById('m-' + id);
   if (!el) return null;
-  const map = L.map(el, { scrollWheelZoom: false, zoomControl: false, attributionControl: true });
+  const map = L.map(el, { scrollWheelZoom: true, zoomControl: false, attributionControl: true, wheelPxPerZoomLevel: 90 });
   L.tileLayer(TILE, { attribution: ATTR, maxZoom: 19, subdomains: 'abcd' }).addTo(map);
-  // roda do mouse só depois de clicar no mapa — senão a página trava ao rolar
-  map.on('click', () => map.scrollWheelZoom.enable());
-  map.on('mouseout', () => map.scrollWheelZoom.disable());
   mapas[id] = { map, camadas: {}, bounds: null };
   return map;
 }
@@ -326,7 +327,7 @@ function tipLoja(li, extra) {
     L.circleMarker([lat, lng], { radius: 6, color: '#fff', weight: 1.6, fillColor: ZONA[zona].cor, fillOpacity: .95 })
       .bindTooltip(tipLoja(i, '<div class="row"><span class="bo" style="background:' + ZONA[zona].cor + '">&nbsp;</span><div>' +
         '<div style="font-weight:700">' + ZONA[zona].lab + '</div><div class="dd">' + cx + ' caixas na carteira</div></div></div>'),
-        { className: 'tt', sticky: true, direction: 'top', offset: [0, -6] })
+        { className: 'tt', sticky: true, direction: 'auto', offset: [0, -6] })
       .addTo(grupos[zona]);
   });
   Object.values(grupos).forEach(g => g.addTo(map));
@@ -358,7 +359,7 @@ function montaRotas(id) {
         .bindTooltip(tipLoja(li, '<div class="row"><span class="bo" style="background:' + COR[r.d] + '">' + ordem + '</span><div>' +
           '<div style="font-weight:700">' + LAB[r.d] + ' · parada ' + ordem + '</div>' +
           '<div class="dd">' + escapa(r.p) + ' · ' + r.km + ' km no dia · ' + cx + ' caixas</div></div></div>'),
-          { className: 'tt', direction: 'top', offset: [0, -14] })
+          { className: 'tt', direction: 'auto', offset: [0, -14] })
         .addTo(g);
     });
     st.camadas[r.k] = g;
